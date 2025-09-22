@@ -1,6 +1,9 @@
+# main.py
 from fastapi import FastAPI
+
+# Import routers
 from api.score import router as score_router
-from api.recommend import router as recommend_router
+from api.recommend_langchain_ollama import router as recommend_router  # Updated recommender
 
 app = FastAPI(
     title="Lead HeatScore API",

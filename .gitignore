@@ -8,7 +8,7 @@ __pycache__/
 # Virtual environment
 venv/
 ENV/
-env/
+.env
 .hf_cache/
 
 # Jupyter Notebook checkpoints
@@ -23,3 +23,8 @@ Thumbs.db
 
 # Logs
 *.log
+*.onnx
+*.bin
+
+# Ollama local models
+.ollama/
