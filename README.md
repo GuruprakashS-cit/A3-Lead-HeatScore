@@ -35,5 +35,5 @@ ollama pull llama3
 
 ##5. Run the FastAPI server
 
-uvicorn api.main:app --reload
+uvicorn main:app --reload
 The API server will start at http://127.0.0.1:8000.
