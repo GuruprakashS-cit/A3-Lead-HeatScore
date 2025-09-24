@@ -95,17 +95,18 @@ def rerank_snippets(query: str, docs: List[Dict], top_n: int = 3):
     return [docs[i] for i in top_idx], [float(scores[i]) for i in top_idx]
 
 def generate_message_with_ollama(lead, top_snippets: List[str]):
+    # New, more restrictive prompt
     prompt = (
-        f"You are an assistant that crafts short friendly outreach messages. "
+        f"Your task is to craft a single, short, and friendly outreach message for a {lead.role}. "
+        f"Do not include any placeholders like [Name], [Company], or [link]. "
+        f"Your message must be directly based on the provided persona snippets. "
         f"Policy: tone={POLICY['tone']}, CTA={POLICY['CTA']}. Keep <= 40 words.\n"
-        f"Lead info: {lead.dict()}\n"
         f"Persona snippets:\n" + "\n".join(f"- {t}" for t in top_snippets)
     )
     response = chat(
         model=ollama_model_name,
         messages=[{"role": "user", "content": prompt}]
     )
-    # Correct way to get text from the latest ollama chat client
     return response['message']['content']
 
 # ------------------ API Route ------------------
@@ -144,9 +145,16 @@ def recommend_action(lead: Lead, top_k: int = 3):
     # 4. Rerank the combined results
     reranked_docs, rerank_scores = rerank_snippets(query_text, combined_docs_list, top_n=top_k)
     
-    # FIX: Access the 'text' key, which is present in both Pinecone and BM25 results
-    top_texts = [d['text'] for d in reranked_docs]
-    references = [d['pid'] for d in reranked_docs]
+    # NEW STEP: Filter the reranked documents to only include the lead's role
+    filtered_docs = [doc for doc in reranked_docs if lead.role.lower() in doc.get('text', '').lower()]
+    
+    # Ensure there's at least one document to work with
+    if not filtered_docs:
+      # If no documents match the specific role, fall back to the top-ranked one
+      filtered_docs = reranked_docs[:1]
+
+    top_texts = [d['text'] for d in filtered_docs] # Use the filtered list here
+    references = [d['pid'] for d in filtered_docs]
 
     # Generate message
     message = generate_message_with_ollama(lead, top_texts)
