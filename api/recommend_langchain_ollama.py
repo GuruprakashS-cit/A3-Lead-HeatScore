@@ -7,9 +7,9 @@ os.environ["TRANSFORMERS_CACHE"] = hf_cache_path
 os.environ["HF_DATASETS_CACHE"] = hf_cache_path
 os.environ["SENTENCE_TRANSFORMERS_HOME"] = hf_cache_path
 
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI, APIRouter, HTTPException, status
 from pydantic import BaseModel
-import joblib, logging, uuid
+import joblib, logging, uuid, time
 from typing import List, Dict
 import numpy as np
 
@@ -22,7 +22,22 @@ from rank_bm25 import BM25Okapi
 from ollama import chat 
 
 # ------------------ Setup ------------------
-logging.basicConfig(level=logging.INFO)
+# Define the path for the new log directory
+LOG_DIR = os.path.join(os.path.dirname(__file__), "../demo")
+os.makedirs(LOG_DIR, exist_ok=True)
+
+# Create a dedicated logger for the RAG pipeline
+rag_logger = logging.getLogger("rag_logger")
+rag_logger.setLevel(logging.INFO)
+# Create a file handler that writes to the new log file
+file_handler = logging.FileHandler(os.path.join(LOG_DIR, "app.log"))
+file_handler.setLevel(logging.INFO)
+# Create a formatter and set it for the file handler
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+file_handler.setFormatter(formatter)
+# Add the file handler to the logger
+rag_logger.addHandler(file_handler)
+
 app = FastAPI(title="Lead HeatScore API",
               description="Classify leads and generate first personalized outreach message",
               version="1.0")
@@ -59,12 +74,12 @@ try:
     reranker = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2", device="cpu")
     have_reranker = True
 except Exception as e:
-    logging.warning("CrossEncoder not available: %s", e)
+    rag_logger.warning("CrossEncoder not available: %s", e)
     reranker = None
     have_reranker = False
 
 # ------------------ Ollama ------------------
-ollama_model_name = "llama3.2:3b"
+ollama_model_name = "gemma:2b" #llama3.2:3b
 
 POLICY = {
     "tone": "friendly",
@@ -95,84 +110,113 @@ def rerank_snippets(query: str, docs: List[Dict], top_n: int = 3):
     return [docs[i] for i in top_idx], [float(scores[i]) for i in top_idx]
 
 def generate_message_with_ollama(lead, top_snippets: List[str]):
-    # New, more restrictive prompt
+    # Updated prompt with a persona and stronger instructions
     prompt = (
-        f"Your task is to craft a single, short, and friendly outreach message for a {lead.role}. "
-        f"Do not include any placeholders like [Name], [Company], or [link]. "
-        f"Your message must be directly based on the provided persona snippets. "
-        f"Policy: tone={POLICY['tone']}, CTA={POLICY['CTA']}. Keep <= 40 words.\n"
+        f"You are a friendly sales agent. Your task is to craft a single, professional outreach message "
+        f"for a {lead.role} that references their interest in the {lead.campaign} campaign. "
+        f"Do not include any placeholders or text formatting like bolding. "
+        f"Synthesize the key points from the provided persona snippets to craft the message. "
+        f"Policy: tone={POLICY['tone']}, CTA={POLICY['CTA']}. Keep the message to a maximum of 40 words.\n"
         f"Persona snippets:\n" + "\n".join(f"- {t}" for t in top_snippets)
     )
+    
+    ollama_start_time = time.perf_counter()
     response = chat(
         model=ollama_model_name,
         messages=[{"role": "user", "content": prompt}]
     )
+    ollama_end_time = time.perf_counter()
+    ollama_latency_ms = (ollama_end_time - ollama_start_time) * 1000
+    rag_logger.info(f"Ollama inference latency: {ollama_latency_ms:.2f} ms")
+    
     return response['message']['content']
 
 # ------------------ API Route ------------------
 @router.post("/")
 def recommend_action(lead: Lead, top_k: int = 3):
+    # Add a separator to the log file for new requests
+    rag_logger.info("\n" + "="*50)
+    
     request_id = str(uuid.uuid4())
+    start_time = time.perf_counter()
     lead_dict = lead.dict()
 
-    # Create query
-    query_text = f"{lead.role} {lead.campaign} interest:{lead.prior_course_interest} pages:{lead.page_views}"
-    query_emb = embeddings.embed_query(query_text)
+    rag_logger.info(f"[{request_id}] Starting RAG for lead: {lead_dict['lead_id']}")
 
-    # Hybrid Search: Vector + Keyword
-    # 1. Vector Search (Pinecone)
-    vector_search_results = pinecone_index.query(
-        vector=query_emb,
-        top_k=5, # Get a few more results for reranking
-        include_metadata=True
-    )
-    vector_docs = [match['metadata'] for match in vector_search_results['matches']]
+    try:
+        # Create query
+        query_text = f"{lead.role} {lead.campaign} interest:{lead.prior_course_interest} pages:{lead.page_views}"
+        query_emb = embeddings.embed_query(query_text)
 
-    # 2. Keyword Search (BM25)
-    tokenized_query = query_text.split(" ")
-    bm25_scores = bm25_index.get_scores(tokenized_query)
-    bm25_top_indices = np.argsort(bm25_scores)[::-1]
-    bm25_docs = [persona_df.iloc[idx].to_dict() for idx in bm25_top_indices if bm25_scores[idx] > 0]
+        # Hybrid Search: Vector + Keyword
+        # 1. Vector Search (Pinecone)
+        vector_search_results = pinecone_index.query(
+            vector=query_emb,
+            top_k=5, # Get a few more results for reranking
+            include_metadata=True
+        )
+        vector_docs = [match['metadata'] for match in vector_search_results['matches']]
+        rag_logger.info(f"[{request_id}] Vector search retrieved {len(vector_docs)} documents.")
+
+        # 2. Keyword Search (BM25)
+        tokenized_query = query_text.split(" ")
+        bm25_scores = bm25_index.get_scores(tokenized_query)
+        bm25_top_indices = np.argsort(bm25_scores)[::-1]
+        bm25_docs = [persona_df.iloc[idx].to_dict() for idx in bm25_top_indices if bm25_scores[idx] > 0]
+        rag_logger.info(f"[{request_id}] Keyword search retrieved {len(bm25_docs)} documents.")
+        
+        # 3. Combine and remove duplicates
+        combined_docs = {doc['pid']: doc for doc in vector_docs}
+        for doc in bm25_docs:
+            if 'pid' in doc and doc['pid'] not in combined_docs:
+                combined_docs[doc['pid']] = doc
+        
+        combined_docs_list = list(combined_docs.values())
+        
+        # 4. Rerank the combined results
+        reranked_docs, rerank_scores = rerank_snippets(query_text, combined_docs_list, top_n=top_k)
+        rag_logger.info(f"[{request_id}] Reranker selected {len(reranked_docs)} top documents with scores: {rerank_scores}")
+
+        # NEW STEP: Filter the reranked documents to only include the lead's role
+        filtered_docs = [doc for doc in reranked_docs if lead.role.lower() in doc.get('text', '').lower()]
+        
+        if not filtered_docs:
+            # If no documents match the specific role, fall back to the top-ranked one
+            filtered_docs = reranked_docs[:1]
+
+        top_texts = [d['text'] for d in filtered_docs]
+        references = [d['pid'] for d in filtered_docs]
+
+        # Generate message
+        message = generate_message_with_ollama(lead, top_texts)
+        rag_logger.info(f"[{request_id}] Message generated successfully.")
+
+        # Select channel
+        channel = POLICY["channel_priority"][0]
+        rationale = f"Lead role: {lead.role}, page_views: {lead.page_views}, prior_course_interest: {lead.prior_course_interest}"
+        if have_reranker and rerank_scores:
+            rationale += f", rerank_scores: {[round(s,3) for s in rerank_scores]}"
+
+        end_time = time.perf_counter()
+        latency_ms = (end_time - start_time) * 1000
+        rag_logger.info(f"[{request_id}] RAG pipeline completed. Latency: {latency_ms:.2f} ms")
+
+        return {
+            "channel": channel,
+            "message": message,
+            "rationale": rationale,
+            "references": references
+        }
     
-    # 3. Combine and remove duplicates
-    combined_docs = {doc['pid']: doc for doc in vector_docs}
-    for doc in bm25_docs:
-        if 'pid' in doc and doc['pid'] not in combined_docs:
-            combined_docs[doc['pid']] = doc
-    
-    combined_docs_list = list(combined_docs.values())
-    
-    # 4. Rerank the combined results
-    reranked_docs, rerank_scores = rerank_snippets(query_text, combined_docs_list, top_n=top_k)
-    
-    # NEW STEP: Filter the reranked documents to only include the lead's role
-    filtered_docs = [doc for doc in reranked_docs if lead.role.lower() in doc.get('text', '').lower()]
-    
-    # Ensure there's at least one document to work with
-    if not filtered_docs:
-      # If no documents match the specific role, fall back to the top-ranked one
-      filtered_docs = reranked_docs[:1]
+    except Exception as e:
+        # Catch any unexpected errors and return a 500 status
+        error_message = f"An unexpected error occurred: {e}"
+        rag_logger.error(f"[{request_id}] RAG pipeline failed with error: {error_message}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=error_message
+        )
 
-    top_texts = [d['text'] for d in filtered_docs] # Use the filtered list here
-    references = [d['pid'] for d in filtered_docs]
-
-    # Generate message
-    message = generate_message_with_ollama(lead, top_texts)
-
-    # Select channel
-    channel = POLICY["channel_priority"][0]
-    rationale = f"Lead role: {lead.role}, page_views: {lead.page_views}, prior_course_interest: {lead.prior_course_interest}"
-    if have_reranker and rerank_scores:
-        rationale += f", rerank_scores: {[round(s,3) for s in rerank_scores]}"
-
-    logging.info({"request_id": request_id, "lead": lead_dict, "references": references})
-
-    return {
-        "channel": channel,
-        "message": message,
-        "rationale": rationale,
-        "references": references
-    }
 
 # ------------------ Register Router ------------------
 app.include_router(router, prefix="/recommend")
