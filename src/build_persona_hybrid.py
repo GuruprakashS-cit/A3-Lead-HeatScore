@@ -1,16 +1,24 @@
 import os
+from dotenv import load_dotenv
 import pandas as pd
 import joblib
 from pinecone import Pinecone, ServerlessSpec
 from langchain_huggingface import HuggingFaceEmbeddings
 from rank_bm25 import BM25Okapi
-# The RecursiveCharacterTextSplitter import is no longer needed
-# from langchain.text_splitter import RecursiveCharacterTextSplitter
+
+# --- Load Environment Variables ---
+load_dotenv()
+# ----------------------------------
 
 # ------------------ Pinecone Setup ------------------
-API_KEY = "pcsk_5VSpwm_16JSye9ViLTq6D4KQL1mmAdf9An5SEsJPJCUoyP6tYrVCi8hSVg3nKJ6ZzsMact"
-ENVIRONMENT = "us-east-1"
+# CRITICAL FIX: Read API Key and Environment from system variables
+API_KEY = os.getenv("PINECONE_API_KEY")
+ENVIRONMENT = os.getenv("PINECONE_ENVIRONMENT")
 INDEX_NAME = "lead-heatscore-qeagle"
+
+# Check for environment variables
+if not API_KEY or not ENVIRONMENT:
+    raise ValueError("PINECONE_API_KEY and PINECONE_ENVIRONMENT must be set in your .env file.")
 
 # ------------------ Path Setup ------------------
 # This path is now correctly updated to point to your CSV file
@@ -48,7 +56,7 @@ except Exception as e:
     print(f"Creating Pinecone index '{INDEX_NAME}'...")
     pc.create_index(
         name=INDEX_NAME,
-        dimension=embed_model._client.get_sentence_embedding_dimension(),
+        dimension=embed_model.client.get_sentence_embedding_dimension(),
         metric="cosine",
         spec=ServerlessSpec(cloud='aws', region=ENVIRONMENT)
     )
