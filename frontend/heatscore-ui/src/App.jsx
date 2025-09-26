@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import LeadScoreDashboard from './components/LeadScoreDashboard';
 import MetricsDashboard from './components/MetricsDashboard';
+import AblationTestDashboard from './components/AblationTestDashboard'; // Import the new component
 import './index.css';
 
 function App() {
-  const [view, setView] = useState('dashboard'); // 'dashboard' or 'metrics'
+  const [view, setView] = useState('dashboard'); // 'dashboard', 'metrics', or 'ablation'
 
   return (
     <div className="bg-gray-100 min-h-screen">
@@ -28,10 +29,20 @@ function App() {
             >
               Metrics Dashboard
             </button>
+            <button
+              onClick={() => setView('ablation')}
+              className={`px-4 py-2 rounded-md font-medium transition-colors ${
+                view === 'ablation' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              Ablation Test
+            </button>
           </div>
         </div>
       </nav>
-      {view === 'dashboard' ? <LeadScoreDashboard /> : <MetricsDashboard />}
+      {view === 'dashboard' && <LeadScoreDashboard />}
+      {view === 'metrics' && <MetricsDashboard />}
+      {view === 'ablation' && <AblationTestDashboard />}
     </div>
   );
 }
