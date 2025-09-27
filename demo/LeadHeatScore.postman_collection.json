@@ -1,0 +1,101 @@
+{
+    "info": {
+      "name": "Lead HeatScore API",
+      "_postman_id": "12345678-abcd-efgh-ijkl-1234567890ab",
+      "description": "Postman collection for testing Lead HeatScore API endpoints",
+      "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+      {
+        "name": "Score Leads",
+        "request": {
+          "method": "POST",
+          "header": [
+            { "key": "Content-Type", "value": "application/json" }
+          ],
+          "body": {
+            "mode": "raw",
+            "raw": "[{\n  \"lead_id\": 11,\n  \"source\": \"Referral\",\n  \"recency_days\": 4,\n  \"region\": \"Europe\",\n  \"role\": \"Manager\",\n  \"campaign\": \"Summer_Internship\",\n  \"page_views\": 47,\n  \"last_touch\": \"Downloaded Brochure\",\n  \"prior_course_interest\": 1\n}]"
+          },
+          "url": {
+            "raw": "http://localhost:8000/score/",
+            "protocol": "http",
+            "host": ["localhost"],
+            "port": "8000",
+            "path": ["score", ""]
+          }
+        }
+      },
+      {
+        "name": "Recommend Action",
+        "request": {
+          "method": "POST",
+          "header": [
+            { "key": "Content-Type", "value": "application/json" }
+          ],
+          "body": {
+            "mode": "raw",
+            "raw": "{\n  \"lead_id\": 11,\n  \"source\": \"Referral\",\n  \"recency_days\": 4,\n  \"region\": \"Europe\",\n  \"role\": \"Manager\",\n  \"campaign\": \"Summer_Internship\",\n  \"page_views\": 47,\n  \"last_touch\": \"Downloaded Brochure\",\n  \"prior_course_interest\": 1\n}"
+          },
+          "url": {
+            "raw": "http://localhost:8000/recommend/?top_k=2",
+            "protocol": "http",
+            "host": ["localhost"],
+            "port": "8000",
+            "path": ["recommend", ""],
+            "query": [{ "key": "top_k", "value": "2" }]
+          }
+        }
+      },
+      {
+        "name": "Ablation Test (BM25)",
+        "request": {
+          "method": "POST",
+          "header": [
+            { "key": "Content-Type", "value": "application/json" }
+          ],
+          "body": {
+            "mode": "raw",
+            "raw": "{\n  \"lead_id\": 11,\n  \"source\": \"Referral\",\n  \"recency_days\": 4,\n  \"region\": \"Europe\",\n  \"role\": \"Manager\",\n  \"campaign\": \"Summer_Internship\",\n  \"page_views\": 47,\n  \"last_touch\": \"Downloaded Brochure\",\n  \"prior_course_interest\": 1\n}"
+          },
+          "url": {
+            "raw": "http://localhost:8000/recommend/ablation-test/bm25?top_k=2",
+            "protocol": "http",
+            "host": ["localhost"],
+            "port": "8000",
+            "path": ["recommend", "ablation-test", "bm25"],
+            "query": [{ "key": "top_k", "value": "2" }]
+          }
+        }
+      },
+      {
+        "name": "Get Metrics",
+        "request": {
+          "method": "GET",
+          "header": [],
+          "url": {
+            "raw": "http://localhost:8000/metrics/",
+            "protocol": "http",
+            "host": ["localhost"],
+            "port": "8000",
+            "path": ["metrics", ""]
+          }
+        }
+      },
+      {
+        "name": "Root Check",
+        "request": {
+          "method": "GET",
+          "header": [],
+          "url": {
+            "raw": "http://localhost:8000/",
+            "protocol": "http",
+            "host": ["localhost"],
+            "port": "8000",
+            "path": [""]
+          }
+        }
+      }
+    ]
+  }
+  

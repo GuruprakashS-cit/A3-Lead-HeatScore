@@ -1,0 +1,314 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+      "title": "Lead HeatScore API",
+      "description": "Classify leads and generate first personalized outreach message",
+      "version": "1.0"
+    },
+    "paths": {
+      "/score/": {
+        "post": {
+          "tags": [
+            "Score"
+          ],
+          "summary": "Score Leads",
+          "description": "Scores a list of leads and returns the class, probabilities, and top features.",
+          "operationId": "score_leads_score__post",
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Lead"
+                  },
+                  "type": "array",
+                  "title": "Leads"
+                }
+              }
+            },
+            "required": true
+          },
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+  
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/recommend/ablation-test/{search_type}": {
+        "post": {
+          "tags": [
+            "Recommend"
+          ],
+          "summary": "Ablation Test",
+          "operationId": "ablation_test_recommend_ablation_test__search_type__post",
+          "parameters": [
+            {
+              "name": "search_type",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string",
+                "title": "Search Type"
+              }
+            },
+            {
+              "name": "top_k",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "type": "integer",
+                "default": 1,
+                "title": "Top K"
+              }
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Lead"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+  
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/recommend/": {
+        "post": {
+          "tags": [
+            "Recommend"
+          ],
+          "summary": "Recommend Action",
+          "operationId": "recommend_action_recommend__post",
+          "parameters": [
+            {
+              "name": "top_k",
+              "in": "query",
+              "required": false,
+              "schema": {
+                "type": "integer",
+                "default": 1,
+                "title": "Top K"
+              }
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Lead"
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+  
+                  }
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/metrics/": {
+        "get": {
+          "tags": [
+            "Metrics"
+          ],
+          "summary": "Get Model Metrics",
+          "description": "Returns the evaluation metrics for the trained classification model on the test set.",
+          "operationId": "get_model_metrics_metrics__get",
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+  
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/": {
+        "get": {
+          "summary": "Root",
+          "operationId": "root__get",
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {
+  
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "components": {
+      "schemas": {
+        "HTTPValidationError": {
+          "properties": {
+            "detail": {
+              "items": {
+                "$ref": "#/components/schemas/ValidationError"
+              },
+              "type": "array",
+              "title": "Detail"
+            }
+          },
+          "type": "object",
+          "title": "HTTPValidationError"
+        },
+        "Lead": {
+          "properties": {
+            "lead_id": {
+              "type": "integer",
+              "title": "Lead Id"
+            },
+            "source": {
+              "type": "string",
+              "title": "Source"
+            },
+            "recency_days": {
+              "type": "integer",
+              "title": "Recency Days"
+            },
+            "region": {
+              "type": "string",
+              "title": "Region"
+            },
+            "role": {
+              "type": "string",
+              "title": "Role"
+            },
+            "campaign": {
+              "type": "string",
+              "title": "Campaign"
+            },
+            "page_views": {
+              "type": "integer",
+              "title": "Page Views"
+            },
+            "last_touch": {
+              "type": "string",
+              "title": "Last Touch"
+            },
+            "prior_course_interest": {
+              "type": "integer",
+              "title": "Prior Course Interest"
+            }
+          },
+          "type": "object",
+          "required": [
+            "lead_id",
+            "source",
+            "recency_days",
+            "region",
+            "role",
+            "campaign",
+            "page_views",
+            "last_touch",
+            "prior_course_interest"
+          ],
+          "title": "Lead"
+        },
+        "ValidationError": {
+          "properties": {
+            "loc": {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "integer"
+                  }
+                ]
+              },
+              "type": "array",
+              "title": "Location"
+            },
+            "msg": {
+              "type": "string",
+              "title": "Message"
+            },
+            "type": {
+              "type": "string",
+              "title": "Error Type"
+            }
+          },
+          "type": "object",
+          "required": [
+            "loc",
+            "msg",
+            "type"
+          ],
+          "title": "ValidationError"
+        }
+      }
+    }
+  }
