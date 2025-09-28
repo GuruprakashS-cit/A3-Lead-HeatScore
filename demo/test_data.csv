@@ -1,0 +1,52 @@
+lead_id,source,recency_days,region,role,campaign,page_views,last_touch,prior_course_interest
+50,Referral,56,SEA,Executive,Summer_Internship,40,Emailed Support,0
+51,Organic,27,Europe,Student,AI_Course_2025,19,Emailed Support,1
+52,Cold Email,69,Europe,Manager,AI_Course_2025,42,Downloaded Brochure,1
+53,Webinar,60,US,Executive,Summer_Internship,97,Attended Webinar,1
+54,Webinar,36,Europe,Executive,Summer_Internship,68,Downloaded Brochure,0
+55,LinkedIn Ad,34,SEA,Student,AI_Course_2025,81,Downloaded Brochure,0
+56,LinkedIn Ad,16,US,Executive,Summer_Internship,80,Downloaded Brochure,1
+57,Cold Email,27,US,Manager,AI_Course_2025,51,Emailed Support,0,
+58,Organic,69,Europe,Executive,AI_Course_2025,72,Attended Webinar,0,
+59,Organic,17,India,Executive,DataScience_Offer,44,Emailed Support,1
+60,Referral,80,US,Student,DataScience_Offer,4,Attended Webinar,1
+61,Organic,52,US,Executive,Summer_Internship,64,Downloaded Brochure,0
+62,Organic,80,India,Manager,DataScience_Offer,77,Attended Webinar,0
+63,Referral,33,India,Student,AI_Course_2025,62,Downloaded Brochure,0
+64,Webinar,50,India,Manager,Summer_Internship,43,Website Visit,0
+65,Webinar,29,SEA,Working Professional,DataScience_Offer,40,Downloaded Brochure,1
+66,LinkedIn Ad,53,US,Manager,Summer_Internship,70,Emailed Support,0
+67,Cold Email,19,SEA,Executive,DataScience_Offer,80,Emailed Support,0
+68,Organic,47,US,Manager,DataScience_Offer,27,Website Visit,0
+69,Referral,81,SEA,Student,Summer_Internship,47,Downloaded Brochure,0
+70,Webinar,81,India,Manager,AI_Course_2025,31,Attended Webinar,1
+71,Webinar,62,India,Manager,DataScience_Offer,1,Downloaded Brochure,0
+72,LinkedIn Ad,50,Europe,Working Professional,AI_Course_2025,25,Emailed Support,0
+73,Webinar,2,Europe,Executive,DataScience_Offer,11,Attended Webinar,0
+74,LinkedIn Ad,1,SEA,Working Professional,Summer_Internship,56,Downloaded Brochure,0
+75,Referral,3,Europe,Student,DataScience_Offer,6,Emailed Support,1
+76,LinkedIn Ad,48,SEA,Manager,AI_Course_2025,1,Website Visit,0
+77,LinkedIn Ad,15,Europe,Working Professional,Summer_Internship,16,Website Visit,1
+78,Webinar,35,US,Executive,AI_Course_2025,20,Attended Webinar,1
+79,LinkedIn Ad,43,India,Executive,DataScience_Offer,41,Website Visit,0
+80,Webinar,57,India,Manager,AI_Course_2025,94,Downloaded Brochure,1
+81,Cold Email,41,Europe,Manager,AI_Course_2025,4,Emailed Support,1
+82,Referral,2,US,Student,AI_Course_2025,50,Emailed Support,1
+83,Referral,49,Europe,Student,Summer_Internship,12,Website Visit,1
+84,Organic,30,SEA,Student,AI_Course_2025,19,Emailed Support,1
+85,Cold Email,35,US,Manager,Summer_Internship,48,Downloaded Brochure,1
+86,Referral,39,US,Manager,Summer_Internship,62,Website Visit,0
+87,Organic,12,US,Executive,Summer_Internship,64,Attended Webinar,0
+88,Organic,46,India,Working Professional,DataScience_Offer,95,Emailed Support,1
+89,Referral,79,Europe,Student,AI_Course_2025,31,Downloaded Brochure,0
+90,Organic,65,SEA,Student,Summer_Internship,3,Website Visit,1
+91,Referral,90,SEA,Working Professional,Summer_Internship,34,Downloaded Brochure,0
+92,LinkedIn Ad,60,Europe,Student,Summer_Internship,35,Attended Webinar,0
+93,Cold Email,68,US,Executive,Summer_Internship,73,Emailed Support,0
+94,LinkedIn Ad,78,US,Executive,AI_Course_2025,4,Emailed Support,1
+95,Referral,55,India,Executive,Summer_Internship,47,Downloaded Brochure,0
+96,Organic,19,US,Student,DataScience_Offer,72,Downloaded Brochure,1
+97,Referral,52,India,Working Professional,DataScience_Offer,56,Downloaded Brochure,0
+98,Cold Email,17,US,Student,DataScience_Offer,33,Attended Webinar,1
+99,Organic,50,India,Working Professional,AI_Course_2025,86,Website Visit,0
+100,Webinar,30,US,Student,Summer_Internship,56,Attended Webinar,0
